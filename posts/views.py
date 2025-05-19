@@ -1,13 +1,12 @@
 import logging
-from typing import Literal
 
+from typing import Literal
 from django.views import View
 from django.db.models.query import QuerySet
 from django.http import HttpResponse, HttpRequest, JsonResponse,HttpResponseBadRequest
 from django.shortcuts import render, redirect
-
 from posts.models import Posts, Images, Categories, PostReaction
-
+from django.conf import settings
 
 logger = logging.getLogger()
 
@@ -100,37 +99,23 @@ class LikesView(View):
         except Posts.DoesNotExist:
             return JsonResponse({"error": "Пост не найден"}, status=404)
 
-        # Проверка, существует ли реакция пользователя на пост
         reaction = PostReaction.objects.filter(user=client, post=post).first()
+        opposite = "dislike" if action == "like" else "like"
 
-        # Снятие реакции (удаление) при повторном нажатии на ту же кнопку
+        # Удаление реакции при повторном нажатии
         if reaction and reaction.reaction == action:
-            if action == "like":
-                post.likes = max(0, post.likes - 1)
-            elif action == "dislike":
-                post.dislikes = max(0, post.dislikes - 1)
+            setattr(post, f"{action}s", max(0, getattr(post, f"{action}s") - 1))
             reaction.delete()
-            post.save(update_fields=["likes", "dislikes"])
-            return redirect('pk_post', pk=pk)
-
-        # Если уже есть противоположная реакция, меняем её
-        if reaction:
-            if reaction.reaction == "like" and action == "dislike":
-                post.likes = max(0, post.likes - 1)
-                post.dislikes += 1
-            elif reaction.reaction == "dislike" and action == "like":
-                post.dislikes = max(0, post.dislikes - 1)
-                post.likes += 1
-            reaction.reaction = action
-            reaction.save()
         else:
-            # Новая реакция
-            PostReaction.objects.create(user=client, post=post, reaction=action)
-            if action == "like":
-                post.likes += 1
-            elif action == "dislike":
-                post.dislikes += 1
+            # Изменение реакции
+            if reaction:
+                setattr(post, f"{reaction.reaction}s", max(0, getattr(post, f"{reaction.reaction}s") - 1))
+                setattr(post, f"{action}s", getattr(post, f"{action}s") + 1)
+                reaction.reaction = action
+                reaction.save()
+            else:
+                PostReaction.objects.create(user=client, post=post, reaction=action)
+                setattr(post, f"{action}s", getattr(post, f"{action}s") + 1)
 
         post.save(update_fields=["likes", "dislikes"])
-
         return redirect('pk_post', pk=pk)

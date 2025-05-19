@@ -1,6 +1,6 @@
 from django.urls import path
 
-from comments.views import AddComment, AddReply
+from comments.views import AddComment, AddReply,CommentLikeView
 
 urlpatterns = [
     path(route="add_comment/<int:pk>", 
@@ -9,4 +9,5 @@ urlpatterns = [
     path(route="add_reply/<int:pk>", 
         view=AddReply.as_view(), name="add_reply"
     ),
+    path("comments/<int:pk>/<str:action>/", CommentLikeView.as_view(), name="comment_reaction"),
 ]

@@ -1,7 +1,7 @@
 from django.urls import path
 
 from posts.views import (
-    PostsView, BasePostView, ShowDeletePostView, LikesView,
+    PostsView, BasePostView, ShowDeletePostView, LikesView
 )
 
 
@@ -17,4 +17,5 @@ urlpatterns = [
         view=LikesView.as_view(), name="likes_view"
     ),
     path('posts/<int:pk>/<str:action>/', LikesView.as_view(), name='post_reaction'),
+   
 ]

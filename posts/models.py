@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-
+from django.contrib.auth import get_user_model
 from clients.models import Client
 
 
@@ -116,3 +116,4 @@ class PostReaction(models.Model):
 
     def __str__(self):
         return f"{self.user} | {self.post} | {self.reaction}"
+
